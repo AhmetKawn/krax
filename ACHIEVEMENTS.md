@@ -10,3 +10,7 @@ Collaborative work with Copilot
 ## Quickdraw
 Resolving issues rapidly
 
+
+## Heart on Your Sleeve ??
+Received first emoji reaction on PR
+
