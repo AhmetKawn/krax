@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -7,7 +8,7 @@ const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Basit bellek içi konuşma geçmişi (demo amaçlı - production'da kullanıcı bazlı session/DB kullanılmalı)
 const conversations = {};
@@ -34,7 +35,7 @@ app.post('/api/chat', async (req, res) => {
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: process.env.CLAUDE_MODEL || 'claude-sonnet-5',
+        model: process.env.CLAUDE_MODEL || 'claude-3-5-sonnet-20241022',
         max_tokens: 1024,
         system: 'Sen web sitesine entegre yardımcı bir yapay zeka asistanısın. Türkçe ve kısa, net cevaplar ver.',
         messages: conversations[sessionId],
@@ -48,10 +49,19 @@ app.post('/api/chat', async (req, res) => {
     }
 
     const data = await response.json();
+    
+    if (!data.content || !Array.isArray(data.content)) {
+      throw new Error('Geçersiz API yanıtı: content alanı bulunamadı');
+    }
+
     const assistantText = data.content
       .filter((block) => block.type === 'text')
       .map((block) => block.text)
       .join('\n');
+    
+    if (!assistantText) {
+      throw new Error('AI yanıtı boş döndü');
+    }
 
     conversations[sessionId].push({ role: 'assistant', content: assistantText });
 
